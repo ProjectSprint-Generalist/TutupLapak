@@ -146,8 +146,8 @@ kubectl logs -l app=tutuplapak -f
 
 ### Health Checks
 
-- **Liveness**: `GET /v1/health`
-- **Readiness**: `GET /v1/health/ready`
+- **Liveness**: `GET /api/v1/health`
+- **Readiness**: `GET /api/v1/health/ready`
 - **Metrics**: `GET /metrics` (Prometheus format)
 
 ### Prometheus Metrics

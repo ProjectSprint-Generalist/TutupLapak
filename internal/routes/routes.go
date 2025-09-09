@@ -10,7 +10,7 @@ import (
 // SetupRoutes configures all the routes for the application
 func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler) {
 	// API version 1
-	v1 := router.Group("/v1")
+	v1 := router.Group("/api/v1")
 	{
 		// Login & register routes
 		v1.POST("/login", loginHandler.Login)
