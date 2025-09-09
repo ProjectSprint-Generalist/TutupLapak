@@ -74,7 +74,7 @@ func (c *Config) initDatabase() {
 		defaultUser := &models.User{
 			ID:    1,
 			Email: "test@example.com",
-			Name:  stringPtr("Test User"),
+			Name:  "Test User",
 		}
 		db.Create(defaultUser)
 		fmt.Println("Default user created with ID: 1")
@@ -107,9 +107,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-// Helper function to create string pointer
-func stringPtr(s string) *string {
-	return &s
 }
