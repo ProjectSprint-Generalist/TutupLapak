@@ -20,7 +20,8 @@ const (
 // User represents a user in the system
 type User struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
-	Email      string    `json:"email" gorm:"uniqueIndex;not null"`
+	Email      *string   `json:"email" gorm:"uniqueIndex;" `
+	Phone      *string   `json:"phone" gorm:"uniqueIndex;" `
 	Password   string    `json:"-" gorm:"not null"`
 	Name       *string   `json:"name" gorm:"type:varchar(255)"`
 	Preference *string   `json:"preference" gorm:"type:varchar(20);check:preference IN ('CARDIO', 'WEIGHT')"`
@@ -35,7 +36,8 @@ type User struct {
 
 // CreateUserRequest represents the request payload for creating a user
 type CreateUserRequest struct {
-	Email      string   `json:"email" binding:"required,email"`
+	Email      string   `json:"email" binding:"omitempty,email"`
+	Phone      string   `json:"phone" binding:"omitempty"`
 	Name       *string  `json:"name"`
 	Preference *string  `json:"preference"`
 	WeightUnit *string  `json:"weightUnit"`
@@ -48,6 +50,7 @@ type CreateUserRequest struct {
 // UpdateUserRequest represents the request payload for updating a user
 type UpdateUserRequest struct {
 	Email      *string  `json:"email,omitempty" binding:"omitempty,email"`
+	Phone      string   `json:"phone" binding:"required"`
 	Name       *string  `json:"name,omitempty"`
 	Preference *string  `json:"preference,omitempty"`
 	WeightUnit *string  `json:"weightUnit,omitempty"`
@@ -83,7 +86,8 @@ func (r *UpdateUserRequest) Validate() error {
 // UserResponse represents the response payload for user data
 type UserResponse struct {
 	ID         uint     `json:"id"`
-	Email      string   `json:"email"`
+	Email      *string  `json:"email"`
+	Phone      *string  `json:"phone"`
 	Name       *string  `json:"name"`
 	Preference *string  `json:"preference"`
 	WeightUnit *string  `json:"weightUnit"`
