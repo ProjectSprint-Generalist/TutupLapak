@@ -17,16 +17,65 @@ func NewLoginHandler(db *gorm.DB) *LoginHandler {
 	}
 }
 
-// Login handle user login requests
-func (h *LoginHandler) Login(context *gin.Context) {
+func passwordValidation(userInput string, userPassword string) *models.ErrorResponse {
+	if err := utils.VerifyPassword(userInput, userPassword); err != nil {
+		errResponse := &models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid password",
+			Code:    http.StatusUnauthorized,
+		}
 
-	var inputUser models.InputUser
+		return errResponse
+	}
+
+	return nil
+}
+
+func tokenGeneration(user *models.User) (string, *models.ErrorResponse) {
+	token, err := middleware.GenerateToken(user)
+	if err != nil {
+		response := &models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to generate token",
+			Code:    http.StatusInternalServerError,
+		}
+		return "", response
+	}
+
+	return token, nil
+
+}
+
+// Login handle user login requests
+func (h *LoginHandler) LoginEmail(context *gin.Context) {
+
+	var inputUser models.LoginEmailInput
 
 	// Bind JSON
 	if err := context.ShouldBindJSON(&inputUser); err != nil {
 		response := models.ErrorResponse{
 			Success: false,
 			Error:   "Invalid input: please provide a valid email and password",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	if err := utils.EmailValidation(inputUser.Email); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid input: invalid email format",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	if err := utils.PasswordLengthValidation(inputUser.Password); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid input: password length must be 8–32 characters",
 			Code:    http.StatusBadRequest,
 		}
 		context.JSON(http.StatusBadRequest, response)
@@ -54,35 +103,26 @@ func (h *LoginHandler) Login(context *gin.Context) {
 		return
 	}
 
+	// Password Hash Validation
+	err := passwordValidation(inputUser.Email, inputUser.Password)
 	// Verify Password
-	if err := utils.VerifyPassword(inputUser.Password, user.Password); err != nil {
-		response := models.ErrorResponse{
-			Success: false,
-			Error:   "Invalid password",
-			Code:    http.StatusUnauthorized,
-		}
-		context.JSON(http.StatusUnauthorized, response)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
 	// Generate Token
-	token, err := middleware.GenerateToken(&user)
+	token, err := tokenGeneration(&user)
 	if err != nil {
-		response := models.ErrorResponse{
-			Success: false,
-			Error:   "Failed to generate token",
-			Code:    http.StatusInternalServerError,
-		}
-		context.JSON(http.StatusInternalServerError, response)
-		return
+		context.JSON(http.StatusInternalServerError, err)
 	}
 
 	// Login successfully
 	context.JSON(http.StatusOK, gin.H{
 		"email": user.Email,
+		"phone": "", // can be replace with: user.Phone if later exists
 		"token": token,
-	},
-	)
+	})
 }
 
 func (h *LoginHandler) LoginPhone(ctx *gin.Context) {
