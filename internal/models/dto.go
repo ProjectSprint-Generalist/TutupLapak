@@ -5,3 +5,8 @@ type LoginEmailInput struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8,max=32"`
 }
+
+type PhoneUser struct {
+	Phone    string `json:"phone" binding:"required"`
+	Password string `json:"password" binding:"required,min=8,max=32"`
+}
