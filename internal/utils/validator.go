@@ -15,6 +15,14 @@ func EmailValidation(emailInput string) error {
 	return nil
 }
 
+func PasswordLengthValidation(password string) error {
+	// Password Validation
+	if len(password) < 8 || len(password) > 32 {
+		return errors.New("password length must be 8–32 characters")
+	}
+	return nil
+}
+
 // Validator
 func Validate(input *models.InputUser) error {
 
@@ -26,8 +34,9 @@ func Validate(input *models.InputUser) error {
 	}
 
 	// Password Validation
-	if len(input.Password) < 8 || len(input.Password) > 32 {
-		return errors.New("password length must be 8–32 characters")
+	err = PasswordLengthValidation(input.Password)
+	if err != nil {
+		return err
 	}
 
 	// Password Check Using Regex

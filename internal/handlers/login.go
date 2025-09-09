@@ -72,6 +72,16 @@ func (h *LoginHandler) LoginEmail(context *gin.Context) {
 		return
 	}
 
+	if err := utils.PasswordLengthValidation(inputUser.Password); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid input: password length must be 8–32 characters",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
 	//  Check existing user
 	var user models.User
 	if err := h.db.Where("email = ?", inputUser.Email).First(&user).Error; err != nil {
@@ -93,6 +103,7 @@ func (h *LoginHandler) LoginEmail(context *gin.Context) {
 		return
 	}
 
+	// Password Hash Validation
 	err := passwordValidation(inputUser.Email, inputUser.Password)
 	// Verify Password
 	if err != nil {
