@@ -51,6 +51,13 @@ func PhoneValidation(phone string) *models.ErrorResponse {
 }
 
 func PasswordValidation(password string) *models.ErrorResponse {
+	if len(password) < 8 || len(password) > 32 {
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Password length must be 8–32 characters",
+			Code:    http.StatusBadRequest,
+		}
+	}
 	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
