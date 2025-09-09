@@ -13,7 +13,10 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 	v1 := router.Group("/v1")
 	{
 		// Login & register routes
-		v1.POST("/login", loginHandler.Login)
+		login := v1.Group("/login")
+		{
+			login.POST("/phone", loginHandler.LoginPhone)
+		}
 		v1.POST("/register", registerHandler.Register)
 
 		// Health check routes

@@ -84,3 +84,76 @@ func (h *LoginHandler) Login(context *gin.Context) {
 	},
 	)
 }
+
+func (h *LoginHandler) LoginPhone(ctx *gin.Context) {
+	var inputUser models.LoginPhoneInput
+
+	// Check if JSON input is valid
+	if err := ctx.ShouldBindJSON(&inputUser); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid input: please provide a valid phone and password",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	// Check if phone number is valid
+	if err := utils.PhoneValidation(inputUser.Phone); err != nil {
+		ctx.JSON(err.Code, err)
+		return
+	}
+
+	// Check if password is valid
+	if err := utils.PasswordValidation(inputUser.Password); err != nil {
+		ctx.JSON(err.Code, err)
+		return
+	}
+
+	// Check if user exists
+	var user models.User
+	if err := h.db.Where("phone = ?", inputUser.Phone).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, models.ErrorResponse{
+				Success: false,
+				Error:   "User does not exist",
+				Code:    http.StatusNotFound,
+			})
+			return
+		}
+	}
+
+	// Verify Password
+	if err := utils.VerifyPassword(inputUser.Password, user.Password); err != nil {
+		ctx.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid password",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	// Generate Token
+	token, err := middleware.GenerateToken(&user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to generate token",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	var userEmail string
+	if user.Email != "" {
+		userEmail = user.Email
+	} else {
+		userEmail = ""
+	}
+
+	ctx.JSON(http.StatusOK, models.LoginPhoneOutput{
+		Phone: user.Phone,
+		Email: userEmail,
+		Token: token,
+	})
+}

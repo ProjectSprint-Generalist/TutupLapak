@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"net/http"
 	"regexp"
 	"tutuplapak/internal/models"
 )
@@ -33,6 +34,34 @@ func Validate(input *models.InputUser) error {
 
 	if !hasNumber || !hasUpper || !hasLower {
 		return errors.New("password must contain at least one number, uppercase letter, lowercase letter")
+	}
+	return nil
+}
+
+func PhoneValidation(phone string) *models.ErrorResponse {
+	phoneRegex := regexp.MustCompile(`^\+[1-9]{1,3}[0-9]{7,14}$`)
+	if !phoneRegex.MatchString(phone) {
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid phone number",
+			Code:    http.StatusBadRequest,
+		}
+	}
+	return nil
+}
+
+func PasswordValidation(password string) *models.ErrorResponse {
+	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
+	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	// hasSpecial := regexp.MustCompile(`[!@#$%^&*]`).MatchString(password)
+
+	if !hasNumber || !hasUpper || !hasLower {
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Password must contain at least one number, uppercase letter, lowercase letter",
+			Code:    http.StatusBadRequest,
+		}
 	}
 	return nil
 }
