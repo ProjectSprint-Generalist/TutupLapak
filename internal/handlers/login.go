@@ -17,7 +17,7 @@ func NewLoginHandler(db *gorm.DB) *LoginHandler {
 	}
 }
 
-func emailValidation(userInput string, userPassword string) *models.ErrorResponse {
+func passwordValidation(userInput string, userPassword string) *models.ErrorResponse {
 	if err := utils.VerifyPassword(userInput, userPassword); err != nil {
 		errResponse := &models.ErrorResponse{
 			Success: false,
@@ -62,6 +62,16 @@ func (h *LoginHandler) LoginEmail(context *gin.Context) {
 		return
 	}
 
+	if err := utils.EmailValidation(inputUser.Email); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid input: invalid email format",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
 	//  Check existing user
 	var user models.User
 	if err := h.db.Where("email = ?", inputUser.Email).First(&user).Error; err != nil {
@@ -83,7 +93,7 @@ func (h *LoginHandler) LoginEmail(context *gin.Context) {
 		return
 	}
 
-	err := emailValidation(inputUser.Email, inputUser.Password)
+	err := passwordValidation(inputUser.Email, inputUser.Password)
 	// Verify Password
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, err)
