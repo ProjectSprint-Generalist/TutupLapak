@@ -17,10 +17,39 @@ func NewLoginHandler(db *gorm.DB) *LoginHandler {
 	}
 }
 
-// Login handle user login requests
-func (h *LoginHandler) Login(context *gin.Context) {
+func emailValidation(userInput string, userPassword string) *models.ErrorResponse {
+	if err := utils.VerifyPassword(userInput, userPassword); err != nil {
+		errResponse := &models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid password",
+			Code:    http.StatusUnauthorized,
+		}
 
-	var inputUser models.InputUser
+		return errResponse
+	}
+
+	return nil
+}
+
+func tokenGeneration(user *models.User) (string, *models.ErrorResponse) {
+	token, err := middleware.GenerateToken(user)
+	if err != nil {
+		response := &models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to generate token",
+			Code:    http.StatusInternalServerError,
+		}
+		return "", response
+	}
+
+	return token, nil
+
+}
+
+// Login handle user login requests
+func (h *LoginHandler) LoginEmail(context *gin.Context) {
+
+	var inputUser models.LoginEmailInput
 
 	// Bind JSON
 	if err := context.ShouldBindJSON(&inputUser); err != nil {
@@ -54,33 +83,23 @@ func (h *LoginHandler) Login(context *gin.Context) {
 		return
 	}
 
+	err := emailValidation(inputUser.Email, inputUser.Password)
 	// Verify Password
-	if err := utils.VerifyPassword(inputUser.Password, user.Password); err != nil {
-		response := models.ErrorResponse{
-			Success: false,
-			Error:   "Invalid password",
-			Code:    http.StatusUnauthorized,
-		}
-		context.JSON(http.StatusUnauthorized, response)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
 	// Generate Token
-	token, err := middleware.GenerateToken(&user)
+	token, err := tokenGeneration(&user)
 	if err != nil {
-		response := models.ErrorResponse{
-			Success: false,
-			Error:   "Failed to generate token",
-			Code:    http.StatusInternalServerError,
-		}
-		context.JSON(http.StatusInternalServerError, response)
-		return
+		context.JSON(http.StatusInternalServerError, err)
 	}
 
 	// Login successfully
 	context.JSON(http.StatusOK, gin.H{
 		"email": user.Email,
+		"phone": "", // can be replace with: user.Phone if later exists
 		"token": token,
-	},
-	)
+	})
 }
