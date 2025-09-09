@@ -102,3 +102,84 @@ func (h *RegisterHandler) Register(context *gin.Context) {
 	},
 	)
 }
+
+func (h *RegisterHandler) RegisterEmail(context *gin.Context) {
+	var inputUser models.InputUser
+	if err := context.ShouldBindJSON(&inputUser); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Validation error",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// Validate email and password input
+	if err := utils.Validate(&inputUser); err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Validation error",
+			Code:    http.StatusBadRequest,
+		}
+		context.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := utils.HashPassword(inputUser.Password)
+	if err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Internal server error",
+			Code:    http.StatusInternalServerError,
+		}
+		context.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	// Create a new user
+	user := &models.User{
+		Email:    inputUser.Email,
+		Password: hashedPassword,
+	}
+
+	if err := h.db.Create(user).Error; err != nil {
+		// Check duplicate email
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			response := models.ErrorResponse{
+				Success: false,
+				Error:   "Email is exist",
+				Code:    http.StatusConflict,
+			}
+			context.JSON(http.StatusConflict, response)
+			return
+		}
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Internal server error",
+			Code:    http.StatusInternalServerError,
+		}
+		context.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	// Generate JWT Token
+	token, err := middleware.GenerateToken(user)
+	if err != nil {
+		response := models.ErrorResponse{
+			Success: false,
+			Error:   "Internal server error",
+			Code:    http.StatusInternalServerError,
+		}
+		context.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	context.JSON(http.StatusCreated, gin.H{
+		"email": user.Email,
+		"phone": "", // empty string if first registering
+		"token": token,
+	})
+}

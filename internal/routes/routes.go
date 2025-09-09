@@ -14,7 +14,8 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 	{
 		// Login & register routes
 		v1.POST("/login", loginHandler.Login)
-		v1.POST("/register", registerHandler.Register)
+		// v1.POST("/register", registerHandler.Register)
+		v1.POST("/register/email", registerHandler.RegisterEmail)
 
 		// Health check routes
 		health := v1.Group("/health")
