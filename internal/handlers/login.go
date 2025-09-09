@@ -151,12 +151,7 @@ func (h *LoginHandler) LoginPhone(ctx *gin.Context) {
 		return
 	}
 
-	var userEmail string
-	if user.Email != "" {
-		userEmail = user.Email
-	} else {
-		userEmail = ""
-	}
+	var userEmail string = user.Email
 
 	ctx.JSON(http.StatusOK, models.LoginPhoneOutput{
 		Phone: user.Phone,
