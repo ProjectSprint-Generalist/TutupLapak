@@ -6,18 +6,37 @@ import (
 	"tutuplapak/internal/models"
 )
 
+func EmailValidation(emailInput string) error {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(emailInput) {
+		return errors.New("email format is invalid")
+	}
+
+	return nil
+}
+
+func PasswordLengthValidation(password string) error {
+	// Password Validation
+	if len(password) < 8 || len(password) > 32 {
+		return errors.New("password length must be 8–32 characters")
+	}
+	return nil
+}
+
 // Validator
 func Validate(input *models.InputUser) error {
 
 	// Email Validation
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	if !emailRegex.MatchString(input.Email) {
-		return errors.New("email format is invalid")
+
+	err := EmailValidation(input.Email)
+	if err != nil {
+		return err
 	}
 
 	// Password Validation
-	if len(input.Password) < 8 || len(input.Password) > 32 {
-		return errors.New("password length must be 8–32 characters")
+	err = PasswordLengthValidation(input.Password)
+	if err != nil {
+		return err
 	}
 
 	// Password Check Using Regex
