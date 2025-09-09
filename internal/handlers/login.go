@@ -121,6 +121,13 @@ func (h *LoginHandler) LoginPhone(ctx *gin.Context) {
 			})
 			return
 		}
+		// Handle other database errors
+		ctx.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
 	}
 
 	// Verify Password
