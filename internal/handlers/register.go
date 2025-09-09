@@ -199,7 +199,7 @@ func (h *RegisterHandler) RegisterPhone(context *gin.Context) {
 	}
 
 	// Validate Phone Number
-	if err := utils.PhoneValidation(&inputUser); err != nil {
+	if err := utils.PhoneValidation(inputUser.Phone); err != nil {
 		response := models.ErrorResponse{
 			Success: false,
 			Error:   "Validation Error",
@@ -210,7 +210,7 @@ func (h *RegisterHandler) RegisterPhone(context *gin.Context) {
 	}
 
 	// Validate Password
-	if err := utils.PasswordValidation(&inputUser); err != nil {
+	if err := utils.PasswordValidation(inputUser.Password); err != nil {
 		response := models.ErrorResponse{
 			Success: false,
 			Error:   "Validation Error",

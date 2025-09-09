@@ -2,12 +2,11 @@ package utils
 
 import (
 	"errors"
+	"net/http"
 	"regexp"
-	"strings"
 	"tutuplapak/internal/models"
 )
 
-var e164Regex = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
 
 func EmailValidation(emailInput string) error {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
@@ -59,34 +58,37 @@ func Validate(input *models.LoginEmailInput) error {
 	return nil
 }
 
-func PhoneValidation(input *models.PhoneUser) error {
-	phone := strings.TrimSpace(input.Phone)
-
-	if phone == "" {
-		return errors.New("phone number is required")
+func PhoneValidation(phone string) *models.ErrorResponse {
+	phoneRegex := regexp.MustCompile(`^\+[1-9]{1,3}[0-9]{7,14}$`)
+	if !phoneRegex.MatchString(phone) {
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid phone number",
+			Code:    http.StatusBadRequest,
+		}
 	}
-
-	if !e164Regex.MatchString(phone) {
-		return errors.New("invalid phone number format")
-	}
-
 	return nil
 }
 
-func PasswordValidation(input *models.PhoneUser) error {
-	password := input.Password
-
-	if len(input.Password) < 8 || len(input.Password) > 32 {
-		return errors.New("password length must be 8–32 characters")
+func PasswordValidation(password string) *models.ErrorResponse {
+	if len(password) < 8 || len(password) > 32 {
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Password length must be 8–32 characters",
+			Code:    http.StatusBadRequest,
+		}
 	}
-
 	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	// hasSpecial := regexp.MustCompile(`[!@#$%^&*]`).MatchString(password)
 
 	if !hasNumber || !hasUpper || !hasLower {
-		return errors.New("password must contain at least one number, one uppercase letter, and one lowercase letter")
+		return &models.ErrorResponse{
+			Success: false,
+			Error:   "Password must contain at least one number, uppercase letter, lowercase letter",
+			Code:    http.StatusBadRequest,
+		}
 	}
-
 	return nil
 }
