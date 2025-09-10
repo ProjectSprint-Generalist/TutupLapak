@@ -19,10 +19,11 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			login.POST("/email", loginHandler.LoginEmail)
 		}
 
-		v1.POST("/register", registerHandler.Register)
-		// v1.POST("/login", loginHandler.Login)
-		// v1.POST("/register", registerHandler.Register)
-		v1.POST("/register/email", registerHandler.RegisterEmail)
+		register := v1.Group("/register")
+		{
+			register.POST("/email", registerHandler.RegisterEmail)
+			register.POST("/phone", registerHandler.RegisterPhone)
+		}
 
 		// Health check routes
 		health := v1.Group("/health")
@@ -36,8 +37,8 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		userAuth.Use(middleware.IsAuthorized())
 		{
 			userAuth.GET("/", userHandler.GetUser)
-			// userAuth.PATCH("/", userHandler.UpdateUser)
 			userAuth.POST("/link/email", userHandler.LinkEmail)
+			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
 		// File upload routes (auth required)

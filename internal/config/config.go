@@ -68,17 +68,18 @@ func (c *Config) initDatabase() {
 	}
 
 	// Seed default user if not exists
-	var count int64
-	db.Model(&models.User{}).Count(&count)
-	if count == 0 {
-		defaultUser := &models.User{
-			ID:    1,
-			Email: "test@example.com",
-			Name:  "Test User",
-		}
-		db.Create(defaultUser)
-		fmt.Println("Default user created with ID: 1")
-	}
+
+	// var count int64
+	// db.Model(&models.User{}).Count(&count)
+	// if count == 0 {
+	// 	defaultUser := &models.User{
+	// 		ID:    1,
+	// 		Email: "test@example.com",
+	// 		Name:  stringPtr("Test User"),
+	// 	}
+	// 	db.Create(defaultUser)
+	// 	fmt.Println("Default user created with ID: 1")
+	// }
 
 	c.DB = db
 	fmt.Println("Database connected successfully")
@@ -108,3 +109,9 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// Helper function to create string pointer
+// func stringPtr(s string) *string {
+// 	return &s
+// }
+
