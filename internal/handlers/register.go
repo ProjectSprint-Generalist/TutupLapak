@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type RegisterHandler struct {
+	db *gorm.DB
+}
+
 // NewRegisterHandler initializes RegisterHandler with the given DB
 func NewRegisterHandler(db *gorm.DB) *RegisterHandler {
 	return &RegisterHandler{

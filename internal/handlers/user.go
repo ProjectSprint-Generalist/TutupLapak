@@ -9,6 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserHandler struct {
+	db *gorm.DB
+}
+
+// NewUserHandler creates a new user handler with dependency injection
+func NewUserHandler(db *gorm.DB) *UserHandler {
+	return &UserHandler{db: db}
+}
+
 // GetUser returns current user profile (GET /v1/user)
 func (h *UserHandler) GetUser(c *gin.Context) {
 	// Extract user ID from context (set by auth middleware)
