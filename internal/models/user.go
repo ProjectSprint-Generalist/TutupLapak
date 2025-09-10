@@ -22,6 +22,20 @@ type User struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
+// InputUser represents the input for user registration
+type InputUser struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8,max=32"`
+}
+
+// UpdateUserRequest represents the request payload for PUT /v1/user
+type UpdateUserRequest struct {
+	FileID            string `json:"fileId" binding:"omitempty"`
+	BankAccountName   string `json:"bankAccountName" binding:"required,min=4,max=32"`
+	BankAccountHolder string `json:"bankAccountHolder" binding:"required,min=4,max=32"`
+	BankAccountNumber string `json:"bankAccountNumber" binding:"required,min=4,max=32"`
+}
+
 // UserResponse represents the response payload for GET /v1/user
 type UserResponse struct {
 	Email             string `json:"email"`
