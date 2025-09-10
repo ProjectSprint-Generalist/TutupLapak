@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"tutuplapak/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -46,18 +47,8 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	// Validate file ID belongs to the user
-	id64, err := strconv.ParseUint(product.FileID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Success: false,
-			Error:   "fileId must be a numeric string",
-			Code:    http.StatusBadRequest,
-		})
-		return
-	}
-
 	var fileUpload models.FileUpload
-	if err := h.db.Where("id = ? and user_id = ?", uint(id64), userIDUint).First(&fileUpload).Error; err != nil {
+	if err := h.db.Where("id = ? and user_id = ?", product.FileID, userIDUint).First(&fileUpload).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Success: false,
@@ -93,16 +84,18 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
+	sku := strings.TrimSpace(product.SKU)
+
 	p := models.Product{
 		UserID:           userIDUint,
 		Name:             product.Name,
 		Category:         product.Category,
 		Qty:              product.Qty,
 		Price:            product.Price,
-		SKU:              product.SKU,
-		FileID:           uint(id64),
+		SKU:              sku,
+		FileID:           product.FileID,
 		FileURI:          fileUpload.FileURI,
-		FileThumbnailURI: "",
+		// FileThumbnailURI: "", // let Go generate zero value
 	}
 
 	if err := h.db.Create(&p).Error; err != nil {
@@ -121,7 +114,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		Quantity:         p.Qty,
 		Price:            p.Price,
 		SKU:              p.SKU,
-		FileID:           strconv.FormatUint(uint64(p.FileID), 10),
+		FileID:           p.FileID,
 		FileURI:          p.FileURI,
 		FileThumbnailURI: p.FileThumbnailURI,
 		CreatedAt:        p.CreatedAt,
