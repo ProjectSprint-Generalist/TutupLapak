@@ -21,3 +21,7 @@ type LoginPhoneOutput struct {
 	Email string `json:"email"`
 	Token string `json:"token"`
 }
+
+type LinkPhoneRequest struct {
+	Phone string `json:"phone" binding:"required"`
+}
