@@ -7,6 +7,7 @@ import (
 	"tutuplapak/internal/models"
 )
 
+
 func EmailValidation(emailInput string) error {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(emailInput) {
@@ -25,7 +26,7 @@ func PasswordLengthValidation(password string) error {
 }
 
 // Validator
-func Validate(input *models.InputUser) error {
+func Validate(input *models.LoginEmailInput) error {
 
 	// Email Validation
 

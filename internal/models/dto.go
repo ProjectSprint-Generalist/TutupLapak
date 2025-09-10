@@ -6,6 +6,11 @@ type LoginEmailInput struct {
 	Password string `json:"password" binding:"required,min=8,max=32"`
 }
 
+type PhoneUser struct {
+	Phone    string `json:"phone" binding:"required"`
+	Password string `json:"password" binding:"required,min=8,max=32"`
+}
+
 type LoginPhoneInput struct {
 	Phone    string `json:"phone" binding:"required"`
 	Password string `json:"password" binding:"required,min=8,max=32"`
