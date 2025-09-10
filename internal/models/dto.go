@@ -1,5 +1,19 @@
 package models
 
+import (
+	"time"
+)
+
+type ProductCategory string
+
+const (
+	Food      ProductCategory = "Food"
+	Beverage  ProductCategory = "Beverage"
+	Clothes   ProductCategory = "Clothes"
+	Furniture ProductCategory = "Furniture"
+	Tools     ProductCategory = "Tools"
+)
+
 // Data Transfer Object Login Input
 type LoginEmailInput struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -24,4 +38,27 @@ type LoginPhoneOutput struct {
 
 type LinkEmailRequest struct {
 	Email string `json:"email" binding:"required,email"`
+}
+
+type ProductInput struct {
+	Name     string          `json:"name" binding:"required,min=4,max=32"`
+	Category ProductCategory `json:"category" binding:"required,oneof=Food Beverage Clothes Furniture Tools"` // Validate both at compile time and runtime
+	Qty      uint            `json:"qty" binding:"required,min=1"`
+	Price    uint            `json:"price" binding:"required,min=100"`
+	SKU      string          `json:"sku" binding:"required,max=32"`
+	FileID   string          `json:"fileId" binding:"required"` // Should be a valid fileId (received from file upload endpoint)
+}
+
+type ProductOutput struct {
+	ProductID        string    `json:"productId"`
+	Name             string    `json:"name"`
+	Category         string    `json:"category"`
+	Quantity         uint      `json:"quantity"`
+	Price            uint      `json:"price"`
+	SKU              string    `json:"sku"`
+	FileID           string    `json:"fileId"`
+	FileURI          string    `json:"fileUri"`
+	FileThumbnailURI string    `json:"fileThumbnailUri"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
