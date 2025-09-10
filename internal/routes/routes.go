@@ -37,6 +37,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		{
 			userAuth.GET("/", userHandler.GetUser)
 			// userAuth.PATCH("/", userHandler.UpdateUser)
+			userAuth.POST("/link/email", userHandler.LinkEmail)
 		}
 
 		// File upload routes (auth required)
