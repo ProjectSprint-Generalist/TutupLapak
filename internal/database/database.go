@@ -38,6 +38,7 @@ func Migrate() error {
 	err := DB.AutoMigrate(
 		&models.User{},
 		&models.FileUpload{},
+		&models.Product{},
 	)
 	if err != nil {
 		log.Printf("Migration error: %v", err)

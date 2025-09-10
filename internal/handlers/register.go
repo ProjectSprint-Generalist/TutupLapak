@@ -264,7 +264,6 @@ func (h *RegisterHandler) RegisterPhone(context *gin.Context) {
 		return
 	}
 
-
 	// Generate JWT Token
 	token, err := middleware.GenerateToken(user)
 	if err != nil {
