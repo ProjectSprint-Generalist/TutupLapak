@@ -38,6 +38,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		{
 			userAuth.GET("/", userHandler.GetUser)
 			userAuth.POST("/link/phone", userHandler.LinkPhone)
+			userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
