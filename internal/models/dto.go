@@ -25,3 +25,7 @@ type LoginPhoneOutput struct {
 type LinkPhoneRequest struct {
 	Phone string `json:"phone" binding:"required"`
 }
+
+type LinkEmailRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
