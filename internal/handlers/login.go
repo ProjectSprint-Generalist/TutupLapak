@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type LoginHandler struct {
+	db *gorm.DB
+}
+
 // NewLoginHandler initializes LoginHandler with the given DB
 func NewLoginHandler(db *gorm.DB) *LoginHandler {
 	return &LoginHandler{
