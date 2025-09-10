@@ -37,6 +37,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		userAuth.Use(middleware.IsAuthorized())
 		{
 			userAuth.GET("/", userHandler.GetUser)
+			userAuth.POST("/link/phone", userHandler.LinkPhone)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
