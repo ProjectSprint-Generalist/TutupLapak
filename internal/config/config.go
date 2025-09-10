@@ -68,6 +68,7 @@ func (c *Config) initDatabase() {
 	}
 
 	// Seed default user if not exists
+
 	// var count int64
 	// db.Model(&models.User{}).Count(&count)
 	// if count == 0 {
@@ -113,3 +114,4 @@ func getEnv(key, defaultValue string) string {
 // func stringPtr(s string) *string {
 // 	return &s
 // }
+

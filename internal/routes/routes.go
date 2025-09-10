@@ -37,7 +37,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		userAuth.Use(middleware.IsAuthorized())
 		{
 			userAuth.GET("/", userHandler.GetUser)
-			userAuth.PATCH("/", userHandler.UpdateUser)
+			// userAuth.PATCH("/", userHandler.UpdateUser)
 		}
 
 		// File upload routes (auth required)
