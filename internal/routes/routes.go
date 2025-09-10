@@ -8,7 +8,7 @@ import (
 )
 
 // SetupRoutes configures all the routes for the application
-func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler) {
+func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler, productHandler *handlers.ProductHandler) {
 	// API version 1
 	v1 := router.Group("/v1")
 	{
@@ -38,6 +38,12 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		{
 			userAuth.GET("/", userHandler.GetUser)
 			userAuth.PUT("/", userHandler.UpdateUser)
+		}
+
+		protectedProduct := v1.Group("/product")
+		protectedProduct.Use(middleware.IsAuthorized())
+		{
+			protectedProduct.PUT("/:productId", productHandler.UpdateProduct)
 		}
 
 		// File upload routes (auth required)
