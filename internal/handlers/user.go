@@ -158,3 +158,81 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, userResponse)
 }
+
+// LinkPhone (POST /v1/user/link/phone)
+func (h *UserHandler) LinkPhone(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "Expired / invalid / missing request token",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+	var req models.LinkPhoneRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Validation error",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+	var user models.User
+	if err := h.db.First(&user, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
+				Success: false,
+				Error:   "User not found",
+				Code:    http.StatusNotFound,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Check if phone number is already linked to another account
+	var existingUser models.User
+	if err := h.db.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Phone number is already linked to another account",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+	user.Phone = req.Phone
+	if err := h.db.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	userResponse := models.UserResponse{
+		Email:             user.Email,
+		Phone:             user.Phone,
+		FileID:            user.FileID,
+		FileURI:           user.FileURI,
+		FileThumbnailURI:  user.FileThumbnailURI,
+		BankAccountName:   user.BankAccountName,
+		BankAccountHolder: user.BankAccountHolder,
+		BankAccountNumber: user.BankAccountNumber,
+	}
+	c.JSON(http.StatusOK, userResponse)
+}
