@@ -139,7 +139,7 @@ func (h *RegisterHandler) RegisterEmail(context *gin.Context) {
 
 	// Create a new user
 	user := &models.User{
-		Email:    &inputUser.Email,
+		Email:    inputUser.Email,
 		Password: hashedPassword,
 	}
 
@@ -246,7 +246,7 @@ func (h *RegisterHandler) RegisterPhone(context *gin.Context) {
 
 	// Create a new user
 	user := &models.User{
-		Phone:    &inputUser.Phone,
+		Phone:    inputUser.Phone,
 		Password: hashedPassword,
 	}
 
