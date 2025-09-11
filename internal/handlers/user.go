@@ -1,15 +1,11 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	"tutuplapak/internal/models"
-	"tutuplapak/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -289,7 +285,6 @@ func (h *UserHandler) LinkPhone(c *gin.Context) {
 			return
 		}
 
-		// Kalau user tidak ditemukan
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, models.ErrorResponse{
 				Success: false,
@@ -299,7 +294,6 @@ func (h *UserHandler) LinkPhone(c *gin.Context) {
 			return
 		}
 
-		// Error lain → 500
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Server error",

@@ -108,7 +108,7 @@ func (h *LoginHandler) LoginEmail(context *gin.Context) {
 	}
 
 	// Password Hash Validation
-	err := passwordValidation(inputUser.Password, user.Password)
+	err := passwordValidation(inputUser.Email, inputUser.Password)
 	// Verify Password
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, err)

@@ -17,7 +17,7 @@ type User struct {
 	BankAccountName   string    `json:"bankAccountName"`
 	BankAccountHolder string    `json:"bankAccountHolder"`
 	BankAccountNumber string    `json:"bankAccountNumber"`
-	ImageURI          string    `json:"imageUri" gorm:"type:text"` 
+	ImageURI          string    `json:"imageUri" gorm:"type:text"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
