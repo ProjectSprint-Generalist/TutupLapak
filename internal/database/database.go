@@ -41,6 +41,7 @@ func Migrate() error {
 		&models.Product{},
 		&models.Purchase{},
 		&models.PurchaseItem{},
+		&models.PurchasePaymentProof{},
 	)
 	if err != nil {
 		log.Printf("Migration error: %v", err)

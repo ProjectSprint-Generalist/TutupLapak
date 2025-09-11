@@ -146,6 +146,7 @@ func (h *PurchaseHandler) PurchaseProducts(c *gin.Context) {
 		return
 	}
 
+	// Decrease product stock based on requested quantities
 	for _, product := range products {
 		requestedQty := productQuantityMap[product.ID]
 		if err := tx.Model(&product).Update("qty", product.Qty-requestedQty).Error; err != nil {
@@ -293,4 +294,149 @@ func (h *PurchaseHandler) PurchaseProducts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+// ProcessPurchase handles POST /v1/purchase/:purchaseId
+// It accepts a list of fileIds (payment proof image ids) and stores them
+// associated to the purchase. It validates that:
+// - caller is authenticated
+// - purchase exists
+// - provided fileIds exist and are owned by the caller
+// - number of fileIds equals the number of distinct sellers in the purchase
+
+/*
+Flow:
+- Accepts array of fileIds
+-
+*/
+func (h *PurchaseHandler) ProcessPurchase(c *gin.Context) {
+	// Auth
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Error: "User not authenticated"})
+		return
+	}
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Error: "Invalid user ID"})
+		return
+	}
+
+	purchaseID := c.Param("purchaseId")
+	if purchaseID == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "purchaseId is required", Code: http.StatusBadRequest})
+		return
+	}
+
+	var req models.ProcessPurchaseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "Invalid request body", Code: http.StatusBadRequest})
+		return
+	}
+
+	if len(req.FileIDs) == 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "fileIds is required", Code: http.StatusBadRequest})
+		return
+	}
+
+	var purchase models.Purchase
+	if err := h.db.Where("id = ?", purchaseID).First(&purchase).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{Success: false, Error: "Purchase not found", Code: http.StatusNotFound})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Database error", Code: http.StatusInternalServerError})
+		return
+	}
+
+	var items []models.PurchaseItem
+	if err := h.db.Where("purchase_id = ?", purchase.ID).Find(&items).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to load purchase items", Code: http.StatusInternalServerError})
+		return
+	}
+
+	if len(items) == 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "Purchase has no items", Code: http.StatusBadRequest})
+		return
+	}
+
+	// Build product -> seller map and distinct sellers
+	productIDs := make([]uint, 0, len(items))
+	for _, it := range items {
+		productIDs = append(productIDs, it.ProductID)
+	}
+
+	var products []models.Product
+	if err := h.db.Where("id IN ?", productIDs).Find(&products).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to load products", Code: http.StatusInternalServerError})
+		return
+	}
+
+	sellerSet := map[uint]struct{}{}
+
+	for _, p := range products {
+		sellerSet[p.UserID] = struct{}{}
+	}
+
+	expectedProofs := len(sellerSet)
+	if expectedProofs == 0 {
+		expectedProofs = 1 // fallback: at least one proof
+	}
+
+	if len(req.FileIDs) != expectedProofs {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "fileIds count does not match required proofs", Code: http.StatusBadRequest})
+		return
+	}
+
+	// Validate fileIds: must exist and belong to caller
+	var fileIDsUint []uint
+	for _, s := range req.FileIDs {
+		id64, err := strconv.ParseUint(s, 10, 32)
+		if err != nil || id64 == 0 {
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "fileIds must be valid numeric ids", Code: http.StatusBadRequest})
+			return
+		}
+		fileIDsUint = append(fileIDsUint, uint(id64))
+	}
+
+	var files []models.FileUpload
+	if err := h.db.Where("id IN ? AND user_id = ?", fileIDsUint, userIDUint).Find(&files).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to validate fileIds", Code: http.StatusInternalServerError})
+		return
+	}
+
+	if len(files) != len(fileIDsUint) {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "fileId is invalid / not exists / not owned", Code: http.StatusBadRequest})
+		return
+	}
+
+	// Persist proofs in a transaction
+	tx := h.db.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to start transaction", Code: http.StatusInternalServerError})
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	for _, fid := range fileIDsUint {
+		proof := models.PurchasePaymentProof{PurchaseID: purchase.ID, FileUploadID: fid}
+		if err := tx.Create(&proof).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to save payment proofs", Code: http.StatusInternalServerError})
+			return
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "Failed to commit transaction", Code: http.StatusInternalServerError})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"success": true})
 }

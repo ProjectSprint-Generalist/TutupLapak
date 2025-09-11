@@ -69,6 +69,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		purchase.Use(middleware.IsAuthorized())
 		{
 			purchase.POST("/", purchaseHandler.PurchaseProducts)
+			purchase.POST("/:purchaseId", purchaseHandler.ProcessPurchase)
 		}
 	}
 
