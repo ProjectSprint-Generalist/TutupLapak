@@ -14,6 +14,13 @@ const (
 	Tools     ProductCategory = "Tools"
 )
 
+type ContactType string
+
+const (
+	ContactTypePhone ContactType = "phone"
+	ContactTypeEmail ContactType = "email"
+)
+
 // Data Transfer Object Login Input
 type LoginEmailInput struct {
 	Email    string `json:"email" binding:"required,email"`

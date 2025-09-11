@@ -62,9 +62,10 @@ func main() {
 	loginHandler := handlers.NewLoginHandler(database.DB)
 	fileHandler := handlers.NewFileHandler(minioService)
 	productHandler := handlers.NewProductHandler(database.DB)
+	purchaseHandler := handlers.NewPurchaseHandler(database.DB)
 
 	// Setup routes
-	routes.SetupRoutes(router, healthHandler, userHandler, registerHandler, loginHandler, fileHandler, productHandler)
+	routes.SetupRoutes(router, healthHandler, userHandler, registerHandler, loginHandler, fileHandler, productHandler, purchaseHandler)
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")

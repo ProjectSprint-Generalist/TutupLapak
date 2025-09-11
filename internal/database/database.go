@@ -39,6 +39,8 @@ func Migrate() error {
 		&models.User{},
 		&models.FileUpload{},
 		&models.Product{},
+		&models.Purchase{},
+		&models.PurchaseItem{},
 	)
 	if err != nil {
 		log.Printf("Migration error: %v", err)
