@@ -16,3 +16,29 @@ type Product struct {
 	CreatedAt        time.Time       `json:"createdAt"`
 	UpdatedAt        time.Time       `json:"updatedAt"`
 }
+
+// Request payload for update
+type UpdateProductRequest struct {
+	Name     string `json:"name" binding:"required,min=4,max=32"`
+	Category string `json:"category" binding:"required,oneof=Food Beverage Clothes Furniture Tools"`
+	Qty      uint   `json:"qty" binding:"required,min=1"`
+	Price    uint   `json:"price" binding:"required,min=100"`
+	SKU      string `json:"sku" binding:"required,min=1,max=32"`
+	FileID   uint   `json:"fileId" binding:"required"`
+}
+
+
+// Response payload
+type ProductResponse struct {
+	ProductID        string    `json:"productId"`
+	Name             string    `json:"name"`
+	Category         string    `json:"category"`
+	Qty              uint      `json:"qty"`
+	Price            uint      `json:"price"`
+	SKU              string    `json:"sku"`
+	FileID           uint      `json:"fileId"`
+	FileURI          string    `json:"fileUri"`
+	FileThumbnailURI string    `json:"fileThumbnailUri"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
+}
