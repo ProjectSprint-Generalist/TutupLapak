@@ -8,7 +8,7 @@ import (
 )
 
 // SetupRoutes configures all the routes for the application
-func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler, productHandler *handlers.ProductHandler) {
+func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler, productHandler *handlers.ProductHandler, purchaseHandler *handlers.PurchaseHandler) {
 	// API version 1
 	v1 := router.Group("/v1")
 	{
@@ -41,7 +41,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
-		
+
 		// File upload routes (auth required)
 		file := v1.Group("/file")
 		file.Use(middleware.IsAuthorized())
@@ -50,12 +50,18 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			file.GET("/", fileHandler.GetUserFiles)
 			file.DELETE("/", fileHandler.DeleteFile)
 		}
-		
+
 		product := v1.Group("/product")
 		product.Use(middleware.IsAuthorized())
 		{
 			product.POST("/", productHandler.CreateProduct)
 			product.PUT("/:productId", productHandler.UpdateProduct)
+		}
+
+		purchase := v1.Group("/purchase")
+		purchase.Use(middleware.IsAuthorized())
+		{
+			purchase.POST("/", purchaseHandler.PurchaseProducts)
 		}
 	}
 
