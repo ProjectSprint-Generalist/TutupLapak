@@ -57,11 +57,11 @@ type ProductInput struct {
 	Qty      uint            `json:"qty" binding:"required,min=1"`
 	Price    uint            `json:"price" binding:"required,min=100"`
 	SKU      string          `json:"sku" binding:"required,max=32"`
-	FileID   uint          `json:"fileId" binding:"required,min=1"` // Should be a valid fileId (received from file upload endpoint), check at runtime
+	FileID   uint            `json:"fileId" binding:"required,min=1"`
 }
 
 type ProductOutput struct {
-	ProductID        string      `json:"productId"`
+	ProductID        string    `json:"productId"`
 	Name             string    `json:"name"`
 	Category         string    `json:"category"`
 	Quantity         uint      `json:"quantity"`

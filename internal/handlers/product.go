@@ -126,7 +126,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	var queryParams models.ProductQueryParams
-	
+
 	if err := c.ShouldBindQuery(&queryParams); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
@@ -138,7 +138,7 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 
 	limit := queryParams.Limit
 	offset := queryParams.Offset
-	
+
 	if limit == 0 {
 		limit = 5
 	}
@@ -367,7 +367,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
-
 
 // DeleteProduct DELETE /v1/product/productId
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
