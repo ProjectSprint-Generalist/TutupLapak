@@ -123,3 +123,143 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, resp)
 }
+
+func (h *ProductHandler) UpdateProduct(c *gin.Context) {
+	// Ambil user_id dari context
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "User not authenticated",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid user ID",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	// Ambil productId dari URL
+	productIdStr := c.Param("productId")
+	productIdUint, err := strconv.ParseUint(productIdStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid productId",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	// Bind & validasi request
+	var req models.UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Validation error: " + err.Error(),
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	// Cari produk milik user
+	var product models.Product
+	if err := h.db.Where("id = ? AND user_id = ?", productIdUint, userIDUint).First(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
+				Success: false,
+				Error:   "productId not found",
+				Code:    http.StatusNotFound,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Cek SKU conflict (per user)
+	var conflict models.Product
+	if err := h.db.Where("user_id = ? AND sku = ? AND id <> ?", userIDUint, req.SKU, productIdUint).First(&conflict).Error; err == nil {
+		c.JSON(http.StatusConflict, models.ErrorResponse{
+			Success: false,
+			Error:   "sku already exists",
+			Code:    http.StatusConflict,
+		})
+		return
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Validasi fileId: apakah fileId milik user
+	fileIdUint := req.FileID
+
+	var fileUpload models.FileUpload
+	if err := h.db.Where("id = ? AND user_id = ?", fileIdUint, userIDUint).First(&fileUpload).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
+				Success: false,
+				Error:   "fileId is not valid / exists",
+				Code:    http.StatusBadRequest,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Update product
+	product.Name = req.Name
+	product.Category = models.ProductCategory(req.Category)
+	product.Qty = req.Qty
+	product.Price = req.Price
+	product.SKU = strings.TrimSpace(req.SKU)
+	product.FileID = uint(fileIdUint)
+	product.FileURI = fileUpload.FileURI
+	// FileThumbnailURI bisa diisi kalau ada service thumbnail
+
+	if err := h.db.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Response sesuai kontrak
+	resp := models.ProductResponse{
+		ProductID:        strconv.FormatUint(uint64(product.ID), 10),
+		Name:             product.Name,
+		Category:         string(product.Category),
+		Qty:              product.Qty,
+		Price:            product.Price,
+		SKU:              product.SKU,
+		FileID:           product.FileID,
+		FileURI:          product.FileURI,
+		FileThumbnailURI: product.FileThumbnailURI,
+		CreatedAt:        product.CreatedAt,
+		UpdatedAt:        product.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
