@@ -27,7 +27,6 @@ type UpdateProductRequest struct {
 	FileID   uint   `json:"fileId" binding:"required"`
 }
 
-
 // Response payload
 type ProductResponse struct {
 	ProductID        string    `json:"productId"`

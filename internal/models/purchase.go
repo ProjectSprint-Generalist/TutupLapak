@@ -2,27 +2,34 @@ package models
 
 import "time"
 
-	
 type Purchase struct {
-	ID                  string      `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	SenderName          string      `json:"senderName" gorm:"not null"`
-	SenderContactType   ContactType `json:"senderContactType" gorm:"not null"`
-	SenderContactDetail string      `json:"senderContactDetail" gorm:"not null"`
-	TotalPrice          uint        `json:"totalPrice" gorm:"not null"`
-	CreatedAt           time.Time   `json:"createdAt"`
-	UpdatedAt           time.Time   `json:"updatedAt"`
+	ID                  string         `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	SenderName          string         `json:"senderName" gorm:"not null"`
+	SenderContactType   ContactType    `json:"senderContactType" gorm:"not null"`
+	SenderContactDetail string         `json:"senderContactDetail" gorm:"not null"`
+	TotalPrice          uint           `json:"totalPrice" gorm:"not null"`
+	CreatedAt           time.Time      `json:"createdAt"`
+	UpdatedAt           time.Time      `json:"updatedAt"`
 	PurchaseItems       []PurchaseItem `json:"purchaseItems" gorm:"foreignKey:PurchaseID;references:ID"`
 }
 
 type PurchaseItem struct {
-	ID         uint   `json:"id" gorm:"primaryKey"`
-	PurchaseID string `json:"purchaseId" gorm:"not null;type:uuid"`
-	ProductID  uint   `json:"productId" gorm:"not null"`
-	Quantity   uint   `json:"quantity" gorm:"not null"`
-	Price      uint   `json:"price" gorm:"not null"`
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	PurchaseID string    `json:"purchaseId" gorm:"not null;type:uuid"`
+	ProductID  uint      `json:"productId" gorm:"not null"`
+	Quantity   uint      `json:"quantity" gorm:"not null"`
+	Price      uint      `json:"price" gorm:"not null"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
-	Product    Product `json:"product" gorm:"foreignKey:ProductID"`
+	Product    Product   `json:"product" gorm:"foreignKey:ProductID"`
+}
+
+type PurchasePaymentProof struct {
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	PurchaseID   string    `json:"purchaseId" gorm:"not null;type:uuid"`
+	FileUploadID uint      `json:"fileUploadId" gorm:"not null"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type PurchasedItems struct {
@@ -37,6 +44,10 @@ type PurchaseRequest struct {
 	SenderContactDetail string           `json:"senderContactDetail" binding:"required"`
 }
 
+type ProcessPurchaseRequest struct {
+	FileIDs []string `json:"fileIds" binding:"required,min=1,dive,required"`
+}
+
 type SellerPaymentInfo struct {
 	BankAccountName   string `json:"bankAccountName"`
 	BankAccountHolder string `json:"bankAccountHolder"`
@@ -45,10 +56,10 @@ type SellerPaymentInfo struct {
 }
 
 type PurchaseResponse struct {
-	PurchaseID     string                   `json:"purchaseId"`
-	PurchasedItems []PurchasedItemResponse  `json:"purchasedItems"`
-	TotalPrice     uint                     `json:"totalPrice"`
-	PaymentDetails []SellerPaymentInfo      `json:"paymentDetails"`
+	PurchaseID     string                  `json:"purchaseId"`
+	PurchasedItems []PurchasedItemResponse `json:"purchasedItems"`
+	TotalPrice     uint                    `json:"totalPrice"`
+	PaymentDetails []SellerPaymentInfo     `json:"paymentDetails"`
 }
 
 type PurchasedItemResponse struct {
