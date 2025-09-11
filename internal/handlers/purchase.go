@@ -381,7 +381,8 @@ func (h *PurchaseHandler) ProcessPurchase(c *gin.Context) {
 
 	expectedProofs := len(sellerSet)
 	if expectedProofs == 0 {
-		expectedProofs = 1 // fallback: at least one proof
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Success: false, Error: "No sellers found for purchase items", Code: http.StatusInternalServerError})
+		return
 	}
 
 	if len(req.FileIDs) != expectedProofs {
