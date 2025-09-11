@@ -55,6 +55,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		product.Use(middleware.IsAuthorized())
 		{
 			product.POST("/", productHandler.CreateProduct)
+			product.DELETE("/:productId", productHandler.DeleteProduct)
 		}
 	}
 
