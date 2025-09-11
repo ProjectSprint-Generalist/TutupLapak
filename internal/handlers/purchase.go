@@ -408,7 +408,7 @@ func (h *PurchaseHandler) ProcessPurchase(c *gin.Context) {
 	}
 
 	if len(files) != len(fileIDsUint) {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "fileId is invalid / not exists / not owned", Code: http.StatusBadRequest})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Success: false, Error: "One or more file IDs are invalid, do not exist, or are not owned by the user", Code: http.StatusBadRequest})
 		return
 	}
 
