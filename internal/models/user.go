@@ -8,8 +8,8 @@ import (
 type User struct {
 	ID                uint      `json:"id" gorm:"primaryKey"`
 	Name              string    `json:"name" gorm:"type:varchar(255)"` 
-	Email             string    `json:"email" gorm:"uniqueIndex;not null"`
-	Phone             string    `json:"phone" gorm:"type:varchar(20)"`
+	Email             string    `json:"email" gorm:"uniqueIndex;default:null"`
+	Phone             string    `json:"phone" gorm:"uniqueIndex;type:varchar(20);default:null"`
 	Password          string    `json:"-" gorm:"not null"`
 	FileID            string    `json:"fileId"`
 	FileURI           string    `json:"fileUri"`
@@ -17,7 +17,7 @@ type User struct {
 	BankAccountName   string    `json:"bankAccountName"`
 	BankAccountHolder string    `json:"bankAccountHolder"`
 	BankAccountNumber string    `json:"bankAccountNumber"`
-	ImageURI          string    `json:"imageUri" gorm:"type:text"` 
+	ImageURI          string    `json:"imageUri" gorm:"type:text"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }

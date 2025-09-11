@@ -37,6 +37,8 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		userAuth.Use(middleware.IsAuthorized())
 		{
 			userAuth.GET("/", userHandler.GetUser)
+			userAuth.POST("/link/phone", userHandler.LinkPhone)
+			userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
@@ -53,6 +55,12 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			file.POST("/", fileHandler.UploadFile)
 			file.GET("/", fileHandler.GetUserFiles)
 			file.DELETE("/", fileHandler.DeleteFile)
+		}
+
+		product := v1.Group("/product")
+		product.Use(middleware.IsAuthorized())
+		{
+			product.POST("/", productHandler.CreateProduct)
 		}
 	}
 
