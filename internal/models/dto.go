@@ -66,3 +66,20 @@ type ProductOutput struct {
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`
 }
+
+type ProductQueryParams struct {
+	Limit     int             `form:"limit" binding:"omitempty,min=1,max=100"`
+	Offset    int             `form:"offset" binding:"omitempty,min=0"`
+	ProductID string          `form:"productId" binding:"omitempty"`
+	SKU       string          `form:"sku" binding:"omitempty"`
+	Category  ProductCategory `form:"category" binding:"omitempty,oneof=Food Beverage Clothes Furniture Tools"`
+	SortBy    string          `form:"sortBy" binding:"omitempty,oneof=newest oldest cheapest expensive"`
+}
+
+type ProductListResponse struct {
+	Success bool            `json:"success"`
+	Data    []ProductOutput `json:"data"`
+	Total   int64           `json:"total"`
+	Limit   int             `json:"limit"`
+	Offset  int             `json:"offset"`
+}

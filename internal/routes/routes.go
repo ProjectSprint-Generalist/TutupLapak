@@ -38,7 +38,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		{
 			userAuth.GET("/", userHandler.GetUser)
 			userAuth.POST("/link/phone", userHandler.LinkPhone)
-			userAuth.POST("/link/email", userHandler.LinkEmail)
+			// userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
@@ -52,9 +52,12 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 		}
 
 		product := v1.Group("/product")
-		product.Use(middleware.IsAuthorized())
 		{
-			product.POST("/", productHandler.CreateProduct)
+			// Public endpoints - no auth required
+			product.GET("/", productHandler.GetProducts)
+			
+			// Protected endpoints - auth required
+			product.POST("/", middleware.IsAuthorized(), productHandler.CreateProduct)
 		}
 	}
 
