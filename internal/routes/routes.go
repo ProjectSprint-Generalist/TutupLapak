@@ -41,7 +41,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
-		
+
 		// File upload routes (auth required)
 		file := v1.Group("/file")
 		file.Use(middleware.IsAuthorized())
@@ -50,7 +50,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			file.GET("/", fileHandler.GetUserFiles)
 			file.DELETE("/", fileHandler.DeleteFile)
 		}
-		
+
 		product := v1.Group("/product")
 		{
 			// Public endpoint - no auth required
@@ -61,6 +61,7 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			{
 				product.POST("/", productHandler.CreateProduct)
 				product.PUT("/:productId", productHandler.UpdateProduct)
+				product.DELETE("/:productId", productHandler.DeleteProduct)
 			}
 		}
 	}

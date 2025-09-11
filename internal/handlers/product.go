@@ -87,14 +87,14 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	sku := strings.TrimSpace(product.SKU)
 
 	p := models.Product{
-		UserID:           userIDUint,
-		Name:             product.Name,
-		Category:         product.Category,
-		Qty:              product.Qty,
-		Price:            product.Price,
-		SKU:              sku,
-		FileID:           product.FileID,
-		FileURI:          fileUpload.FileURI,
+		UserID:   userIDUint,
+		Name:     product.Name,
+		Category: product.Category,
+		Qty:      product.Qty,
+		Price:    product.Price,
+		SKU:      sku,
+		FileID:   product.FileID,
+		FileURI:  fileUpload.FileURI,
 		// FileThumbnailURI: "", // let Go generate zero value
 	}
 
@@ -366,4 +366,61 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+
+// DeleteProduct DELETE /v1/product/productId
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "Expired / invalid / missing request token",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	productIdStr := c.Param("productId")
+	productId, err := strconv.ParseUint(productIdStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid product ID",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	var product models.Product
+	if err := h.db.Where("id = ? AND user_id = ?", productId, userID).First(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
+				Success: false,
+				Error:   "ProductId is not found",
+				Code:    http.StatusNotFound,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	if err := h.db.Delete(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Message: "Product deleted successfully",
+	})
 }
