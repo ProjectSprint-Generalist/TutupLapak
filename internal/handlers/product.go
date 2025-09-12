@@ -48,7 +48,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 	// Validate file ID belongs to the user
 	var fileUpload models.FileUpload
-	if err := h.db.Where("id = ? and user_id = ?", product.FileID, userIDUint).First(&fileUpload).Error; err != nil {
+	if err := h.db.Where("file_id = ?", product.FileID).First(&fileUpload).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Success: false,
@@ -229,7 +229,6 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 }
 
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
-	// Ambil user_id dari context
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
@@ -250,7 +249,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// Ambil productId dari URL
 	productIdStr := c.Param("productId")
 	productIdUint, err := strconv.ParseUint(productIdStr, 10, 64)
 	if err != nil {
@@ -311,10 +309,10 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	// Validasi fileId: apakah fileId milik user
-	fileIdUint := req.FileID
+	fileId := req.FileID
 
 	var fileUpload models.FileUpload
-	if err := h.db.Where("id = ? AND user_id = ?", fileIdUint, userIDUint).First(&fileUpload).Error; err != nil {
+	if err := h.db.Where("file_id = ?", fileId).First(&fileUpload).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Success: false,
@@ -337,7 +335,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	product.Qty = req.Qty
 	product.Price = req.Price
 	product.SKU = strings.TrimSpace(req.SKU)
-	product.FileID = uint(fileIdUint)
+	product.FileID = fileId
 	product.FileURI = fileUpload.FileURI
 	// FileThumbnailURI bisa diisi kalau ada service thumbnail
 
