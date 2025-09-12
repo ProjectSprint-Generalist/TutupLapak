@@ -42,13 +42,11 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
 
-		// File upload routes (auth required)
+		// File upload routes
 		file := v1.Group("/file")
-		file.Use(middleware.IsAuthorized())
 		{
+			// Public endpoints - no auth required
 			file.POST("/", fileHandler.UploadFile)
-			file.GET("/", fileHandler.GetUserFiles)
-			file.DELETE("/", fileHandler.DeleteFile)
 		}
 
 		product := v1.Group("/product")
