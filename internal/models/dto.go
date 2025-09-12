@@ -14,6 +14,13 @@ const (
 	Tools     ProductCategory = "Tools"
 )
 
+type ContactType string
+
+const (
+	ContactTypePhone ContactType = "phone"
+	ContactTypeEmail ContactType = "email"
+)
+
 // Data Transfer Object Login Input
 type LoginEmailInput struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -50,11 +57,11 @@ type ProductInput struct {
 	Qty      uint            `json:"qty" binding:"required,min=1"`
 	Price    uint            `json:"price" binding:"required,min=100"`
 	SKU      string          `json:"sku" binding:"required,max=32"`
-	FileID   uint          `json:"fileId" binding:"required,min=1"` // Should be a valid fileId (received from file upload endpoint), check at runtime
+	FileID   uint            `json:"fileId" binding:"required,min=1"`
 }
 
 type ProductOutput struct {
-	ProductID        string      `json:"productId"`
+	ProductID        string    `json:"productId"`
 	Name             string    `json:"name"`
 	Category         string    `json:"category"`
 	Quantity         uint      `json:"quantity"`
@@ -65,4 +72,21 @@ type ProductOutput struct {
 	FileThumbnailURI string    `json:"fileThumbnailUri"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`
+}
+
+type ProductQueryParams struct {
+	Limit     int             `form:"limit" binding:"omitempty,min=1,max=100"`
+	Offset    int             `form:"offset" binding:"omitempty,min=0"`
+	ProductID string          `form:"productId" binding:"omitempty"`
+	SKU       string          `form:"sku" binding:"omitempty"`
+	Category  ProductCategory `form:"category" binding:"omitempty,oneof=Food Beverage Clothes Furniture Tools"`
+	SortBy    string          `form:"sortBy" binding:"omitempty,oneof=newest oldest cheapest expensive"`
+}
+
+type ProductListResponse struct {
+	Success bool            `json:"success"`
+	Data    []ProductOutput `json:"data"`
+	Total   int64           `json:"total"`
+	Limit   int             `json:"limit"`
+	Offset  int             `json:"offset"`
 }

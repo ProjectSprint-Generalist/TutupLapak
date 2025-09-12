@@ -8,7 +8,7 @@ import (
 )
 
 // SetupRoutes configures all the routes for the application
-func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler, productHandler *handlers.ProductHandler) {
+func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, userHandler *handlers.UserHandler, registerHandler *handlers.RegisterHandler, loginHandler *handlers.LoginHandler, fileHandler *handlers.FileHandler, productHandler *handlers.ProductHandler, purchaseHandler *handlers.PurchaseHandler) {
 	// API version 1
 	v1 := router.Group("/v1")
 	{
@@ -41,21 +41,43 @@ func SetupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, user
 			userAuth.POST("/link/email", userHandler.LinkEmail)
 			userAuth.PUT("/", userHandler.UpdateUser)
 		}
+<<<<<<< HEAD
 		
 		// File upload routes (auth required)
+=======
+
+		// File upload routes
+>>>>>>> 3243a3b50aa3e30483cab26db02e36844d8c2b9f
 		file := v1.Group("/file")
-		file.Use(middleware.IsAuthorized())
 		{
+			// Public endpoints - no auth required
 			file.POST("/", fileHandler.UploadFile)
-			file.GET("/", fileHandler.GetUserFiles)
-			file.DELETE("/", fileHandler.DeleteFile)
 		}
 		
 		product := v1.Group("/product")
-		product.Use(middleware.IsAuthorized())
 		{
+<<<<<<< HEAD
 			product.POST("/", productHandler.CreateProduct)
 			product.PUT("/:productId", productHandler.UpdateProduct)
+=======
+			// Public endpoint - no auth required
+			product.GET("/", productHandler.GetProducts)
+
+			// Protected endpoints - auth required
+			product.Use(middleware.IsAuthorized())
+			{
+				product.POST("/", productHandler.CreateProduct)
+				product.PUT("/:productId", productHandler.UpdateProduct)
+				product.DELETE("/:productId", productHandler.DeleteProduct)
+			}
+		}
+
+		purchase := v1.Group("/purchase")
+		purchase.Use(middleware.IsAuthorized())
+		{
+			purchase.POST("/", purchaseHandler.PurchaseProducts)
+			purchase.POST("/:purchaseId", purchaseHandler.ProcessPurchase)
+>>>>>>> 3243a3b50aa3e30483cab26db02e36844d8c2b9f
 		}
 	}
 

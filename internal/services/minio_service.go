@@ -1,16 +1,19 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"io"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
-	"time"
-
 	"tutuplapak/internal/config"
 	"tutuplapak/internal/models"
 
+	"github.com/disintegration/imaging"
+	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"gorm.io/gorm"
@@ -72,25 +75,87 @@ func (s *MinIOService) UploadFile(file *multipart.FileHeader, userID uint) (*mod
 	}
 	defer src.Close()
 
+	// Read the entire file into memory for processing
+	fileBytes, err := io.ReadAll(src)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Generate a unique fileId
+	fileID := uuid.New().String()
+
+	// Reset the file reader for upload
+	fileReader := bytes.NewReader(fileBytes)
+
 	fileExt := strings.ToLower(filepath.Ext(file.Filename))
-	objectName := fmt.Sprintf("%d/%s_%d%s", userID, strings.TrimSuffix(file.Filename, fileExt), time.Now().Unix(), fileExt)
+	objectName := fmt.Sprintf("uploads/%s%s", fileID, fileExt)
 
 	ctx := context.Background()
-	_, err = s.client.PutObject(ctx, s.bucketName, objectName, src, file.Size, minio.PutObjectOptions{
+
+	// Upload the original file
+	_, err = s.client.PutObject(ctx, s.bucketName, objectName, fileReader, file.Size, minio.PutObjectOptions{
 		ContentType: file.Header.Get("Content-Type"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file to MinIO: %w", err)
 	}
 
-	fileURI := fmt.Sprintf("%s/%s/%s", s.client.EndpointURL(), s.bucketName, objectName)
+	fileURI := fmt.Sprintf("%s/%s/%s", s.client.EndpointURL().String(), s.bucketName, objectName)
+
+	// Create thumbnail
+	img, _, err := image.Decode(bytes.NewReader(fileBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Resize to create thumbnail (100x100 maintaining aspect ratio)
+	thumbnail := imaging.Resize(img, 100, 100, imaging.Lanczos)
+
+	var thumbnailBuf bytes.Buffer
+	var format imaging.Format
+
+	switch strings.ToLower(filepath.Ext(file.Filename)) {
+	case ".jpg", ".jpeg":
+		format = imaging.JPEG
+	case ".png":
+		format = imaging.PNG
+	default:
+		format = imaging.JPEG // Default to JPEG
+	}
+
+	err = imaging.Encode(&thumbnailBuf, thumbnail, format)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode thumbnail: %w", err)
+	}
+
+	// Upload the thumbnail
+	thumbnailObjectName := fmt.Sprintf("thumbnails/%s%s", fileID, fileExt)
+	_, err = s.client.PutObject(
+		ctx,
+		s.bucketName,
+		thumbnailObjectName,
+		bytes.NewReader(thumbnailBuf.Bytes()),
+		int64(thumbnailBuf.Len()),
+		minio.PutObjectOptions{ContentType: file.Header.Get("Content-Type")},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload thumbnail to MinIO: %w", err)
+	}
+
+	thumbnailURI := fmt.Sprintf("%s/%s/%s", s.client.EndpointURL().String(), s.bucketName, thumbnailObjectName)
 
 	fileUpload := &models.FileUpload{
-		FileName: file.Filename,
-		FileSize: file.Size,
-		FileType: file.Header.Get("Content-Type"),
-		FileURI:  fileURI,
-		UserID:   userID,
+		FileName:         file.Filename,
+		FileSize:         file.Size,
+		FileType:         file.Header.Get("Content-Type"),
+		FileURI:          fileURI,
+		FileThumbnailURI: thumbnailURI,
+		FileID:           fileID,
+	}
+
+	// Only set UserID if it's not zero (for authenticated uploads)
+	if userID > 0 {
+		fileUpload.UserID = &userID
 	}
 
 	if err := s.db.Create(fileUpload).Error; err != nil {
@@ -98,7 +163,9 @@ func (s *MinIOService) UploadFile(file *multipart.FileHeader, userID uint) (*mod
 	}
 
 	return &models.FileUploadResponse{
-		URI: fileURI,
+		FileID:           fileID,
+		FileURI:          fileURI,
+		FileThumbnailURI: thumbnailURI,
 	}, nil
 }
 
@@ -128,34 +195,4 @@ func (s *MinIOService) validateFile(file *multipart.FileHeader) error {
 	}
 
 	return fmt.Errorf("file extension %s not allowed. Only .jpg, .jpeg, and .png are supported", fileExt)
-}
-
-func (s *MinIOService) DeleteFile(fileURI string, userID uint) error {
-	fileUpload := &models.FileUpload{}
-	if err := s.db.Where("file_uri = ? AND user_id = ?", fileURI, userID).First(fileUpload).Error; err != nil {
-		return fmt.Errorf("file not found: %w", err)
-	}
-
-	objectName := strings.TrimPrefix(fileUpload.FileURI, fmt.Sprintf("%s/%s/", s.client.EndpointURL(), s.bucketName))
-	ctx := context.Background()
-	err := s.client.RemoveObject(ctx, s.bucketName, objectName, minio.RemoveObjectOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to delete file from MinIO: %w", err)
-	}
-
-	if err := s.db.Delete(fileUpload).Error; err != nil {
-		return fmt.Errorf("failed to delete file metadata: %w", err)
-	}
-
-	return nil
-}
-
-func (s *MinIOService) GetUserFiles(userID uint, limit, offset int) ([]models.FileUpload, error) {
-	var files []models.FileUpload
-	err := s.db.Where("user_id = ?", userID).
-		Order("created_at DESC").
-		Limit(limit).
-		Offset(offset).
-		Find(&files).Error
-	return files, err
 }

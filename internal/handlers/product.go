@@ -87,14 +87,14 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	sku := strings.TrimSpace(product.SKU)
 
 	p := models.Product{
-		UserID:           userIDUint,
-		Name:             product.Name,
-		Category:         product.Category,
-		Qty:              product.Qty,
-		Price:            product.Price,
-		SKU:              sku,
-		FileID:           product.FileID,
-		FileURI:          fileUpload.FileURI,
+		UserID:   userIDUint,
+		Name:     product.Name,
+		Category: product.Category,
+		Qty:      product.Qty,
+		Price:    product.Price,
+		SKU:      sku,
+		FileID:   product.FileID,
+		FileURI:  fileUpload.FileURI,
 		// FileThumbnailURI: "", // let Go generate zero value
 	}
 
@@ -124,6 +124,113 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+<<<<<<< HEAD
+=======
+func (h *ProductHandler) GetProducts(c *gin.Context) {
+	var queryParams models.ProductQueryParams
+
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid query parameters",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	limit := queryParams.Limit
+	offset := queryParams.Offset
+
+	if limit == 0 {
+		limit = 5
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	query := h.db.Model(&models.Product{})
+
+	if queryParams.ProductID != "" {
+		if productID, err := strconv.ParseUint(queryParams.ProductID, 10, 32); err == nil {
+			query = query.Where("id = ?", uint(productID))
+		}
+	}
+
+	if queryParams.SKU != "" {
+		sku := strings.TrimSpace(queryParams.SKU)
+		if sku != "" {
+			query = query.Where("sku = ?", sku)
+		}
+	}
+
+	if queryParams.Category != "" {
+		query = query.Where("category = ?", queryParams.Category)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	switch queryParams.SortBy {
+	case "newest":
+		query = query.Order("created_at DESC, updated_at DESC")
+	case "oldest":
+		query = query.Order("created_at ASC, updated_at ASC")
+	case "cheapest":
+		query = query.Order("price ASC")
+	case "expensive":
+		query = query.Order("price DESC")
+	default:
+		query = query.Order("created_at DESC, updated_at DESC")
+	}
+
+	query = query.Limit(limit).Offset(offset)
+
+	var products []models.Product
+	if err := query.Find(&products).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	var productOutputs []models.ProductOutput
+	for _, product := range products {
+		productOutputs = append(productOutputs, models.ProductOutput{
+			ProductID:        strconv.FormatUint(uint64(product.ID), 10),
+			Name:             product.Name,
+			Category:         string(product.Category),
+			Quantity:         product.Qty,
+			Price:            product.Price,
+			SKU:              product.SKU,
+			FileID:           product.FileID,
+			FileURI:          product.FileURI,
+			FileThumbnailURI: product.FileThumbnailURI,
+			CreatedAt:        product.CreatedAt,
+			UpdatedAt:        product.UpdatedAt,
+		})
+	}
+
+	response := models.ProductListResponse{
+		Success: true,
+		Data:    productOutputs,
+		Total:   total,
+		Limit:   limit,
+		Offset:  offset,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+>>>>>>> 3243a3b50aa3e30483cab26db02e36844d8c2b9f
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	// Ambil user_id dari context
 	userID, exists := c.Get("user_id")
@@ -263,3 +370,62 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+<<<<<<< HEAD
+=======
+
+// DeleteProduct DELETE /v1/product/productId
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Success: false,
+			Error:   "Expired / invalid / missing request token",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	productIdStr := c.Param("productId")
+	productId, err := strconv.ParseUint(productIdStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid product ID",
+			Code:    http.StatusBadRequest,
+		})
+		return
+	}
+
+	var product models.Product
+	if err := h.db.Where("id = ? AND user_id = ?", productId, userID).First(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
+				Success: false,
+				Error:   "ProductId is not found",
+				Code:    http.StatusNotFound,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	if err := h.db.Delete(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Server Error",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Message: "Product deleted successfully",
+	})
+}
+>>>>>>> 3243a3b50aa3e30483cab26db02e36844d8c2b9f
