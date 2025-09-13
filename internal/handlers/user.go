@@ -190,7 +190,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	if req.FileID != "" {
 		var fileUpload models.FileUpload
-		if err := h.db.Where("id = ? AND user_id = ?", req.FileID, userID).First(&fileUpload).Error; err != nil {
+		if err := h.db.Where("file_id = ? AND user_id = ?", req.FileID, userID).First(&fileUpload).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(http.StatusBadRequest, models.ErrorResponse{
 					Success: false,
