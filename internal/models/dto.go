@@ -57,7 +57,7 @@ type ProductInput struct {
 	Qty      uint            `json:"qty" binding:"required,min=1"`
 	Price    uint            `json:"price" binding:"required,min=100"`
 	SKU      string          `json:"sku" binding:"required,max=32"`
-	FileID   uint            `json:"fileId" binding:"required,min=1"`
+	FileID   string            `json:"fileId" binding:"required,min=1"`
 }
 
 type ProductOutput struct {
@@ -67,7 +67,7 @@ type ProductOutput struct {
 	Quantity         uint      `json:"quantity"`
 	Price            uint      `json:"price"`
 	SKU              string    `json:"sku"`
-	FileID           uint      `json:"fileId"`
+	FileID           string      `json:"fileId"`
 	FileURI          string    `json:"fileUri"`
 	FileThumbnailURI string    `json:"fileThumbnailUri"`
 	CreatedAt        time.Time `json:"createdAt"`

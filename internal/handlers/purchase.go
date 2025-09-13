@@ -206,7 +206,7 @@ func (h *PurchaseHandler) PurchaseProducts(c *gin.Context) {
 			Qty:              item.Quantity,
 			Price:            product.Price,
 			SKU:              product.SKU,
-			FileID:           strconv.FormatUint(uint64(product.FileID), 10),
+			FileID:           product.FileID,
 			FileURI:          product.FileURI,
 			FileThumbnailURI: product.FileThumbnailURI,
 			CreatedAt:        product.CreatedAt.Format(time.RFC3339),
