@@ -53,3 +53,9 @@ pids
 
 # Air (hot reload) temporary files
 tmp/
+
+# Google Cloud Service Account Keys
+ps-key.json
+*.json
+!go.mod
+!go.sum

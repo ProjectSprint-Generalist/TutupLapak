@@ -68,6 +68,8 @@ spec:
               value: {{ .Values.configMap.data.PROMETHEUS_ENABLED | quote }}
             - name: METRICS_PORT
               value: {{ .Values.configMap.data.METRICS_PORT | quote }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/etc/gcp/ps-key.json"
           livenessProbe:
             {{- toYaml .Values.app.livenessProbe | nindent 12 }}
           readinessProbe:
@@ -78,10 +80,19 @@ spec:
             - name: config
               mountPath: /app/config
               readOnly: true
+            - name: gcp-service-account
+              mountPath: /etc/gcp
+              readOnly: true
       volumes:
         - name: config
           configMap:
             name: {{ include "tutuplapak.fullname" . }}-config
+        - name: gcp-service-account
+          secret:
+            secretName: {{ include "tutuplapak.fullname" . }}-secrets
+            items:
+            - key: gcp-service-account-key
+              path: ps-key.json
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

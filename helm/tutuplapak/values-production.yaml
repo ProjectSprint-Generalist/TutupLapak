@@ -155,6 +155,9 @@ secrets:
     database-url: "postgres://user:password@external-db:5432/tutuplapak?sslmode=require"
     minio-access-key: "CHANGE_ME_IN_PRODUCTION"
     minio-secret-key: "CHANGE_ME_IN_PRODUCTION"
+    # Google Cloud Service Account Key (base64 encoded)
+    # To encode: cat ps-key.json | base64 -w 0
+    gcp-service-account-key: "CHANGE_ME_IN_PRODUCTION"
 
 # ServiceMonitor for Prometheus
 serviceMonitor:
